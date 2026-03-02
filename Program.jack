@@ -35,23 +35,25 @@ class Program {
     var int column;
     var int row;
 
-    // Column, row always represent the position of the cursor
+    // Column, row always represent the position of the user cursor "|"
     let column = 0;
     let row = 0;
 
     while(true) {
       let key = waitKey();
       if(key = CHAR_BACKSPACE) {
-        do Output.moveCursor(row, column);
-        do Output.printChar(CHAR_SPACE);
-        let column = column - 1;
-        do Output.moveCursor(row, column);
-        do Output.printChar(CURSOR_CHAR);
+        if(~(column = 0)) {
+          do Output.moveCursor(row, column);
+          do Output.printChar(CHAR_SPACE);
+          let column = column - 1;
+          do Output.moveCursor(row, column);
+          do Output.printChar(CURSOR_CHAR);
+        }
       } else {
-        let column = column + 1;
-        do Output.moveCursor(row, column - 1);
+        do Output.moveCursor(row, column);
         do Output.printChar(key);
         do Output.printChar(CURSOR_CHAR);
+        let column = column + 1;
       }
     }
     return;
