@@ -1,0 +1,59 @@
+class Program {
+  field char CHAR_BACKSPACE;
+  field char CHAR_PIPE;
+  field char CHAR_SPACE;
+  field char CURSOR_CHAR;
+
+  constructor Program new() {
+    let CHAR_BACKSPACE = 129;
+    let CHAR_PIPE = 124;
+    let CHAR_SPACE = 32;
+    let CURSOR_CHAR = CHAR_PIPE;
+
+    return this;
+  }
+
+  // https://github.com/nand2tetris/nand2tetris_simulator/blob/327b7e4337b31efb815e1c1e3913c0efd299bcf2/BuiltInVMCodeSource/Keyboard.java#L53
+  method char waitKey() {
+    var char current;
+    var char saved;
+    let current = 0;
+    let saved = 0;
+
+    while(saved = 0 | ~(current = 0)) {
+      do Sys.wait(25); // Wait 25 ms
+      let current = Keyboard.keyPressed();
+      if(~(current = 0)) {
+        let saved = current;
+      }
+    }
+    return saved;
+  }
+
+  method void main() {
+    var char key;
+    var int column;
+    var int row;
+
+    // Column, row always represent the position of the cursor
+    let column = 0;
+    let row = 0;
+
+    while(true) {
+      let key = waitKey();
+      if(key = CHAR_BACKSPACE) {
+        do Output.moveCursor(row, column);
+        do Output.printChar(CHAR_SPACE);
+        let column = column - 1;
+        do Output.moveCursor(row, column);
+        do Output.printChar(CURSOR_CHAR);
+      } else {
+        let column = column + 1;
+        do Output.moveCursor(row, column - 1);
+        do Output.printChar(key);
+        do Output.printChar(CURSOR_CHAR);
+      }
+    }
+    return;
+  }
+}

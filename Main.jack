@@ -1,0 +1,8 @@
+class Main {
+  function void main() {
+    var Program program;
+    let program = Program.new();
+    do program.main();
+    return;
+  }
+}
