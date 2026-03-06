@@ -142,6 +142,46 @@ class Program {
           do Output.printChar(CURSOR_CHAR);
         }
       }
+      if(key = CHAR_UP) {
+        if(lineNo > 0) {
+          // Clear the current cursor
+          do Output.moveCursor(lineNo + screenRowOffset, column + LINE_PREAMBLE_LENGTH);
+          let line = lines[lineNo];
+          if(column < line.length()) {
+            do Output.printChar(line.charAt(column));
+          } else {
+            do Output.printChar(CHAR_SPACE);
+          }
+
+          // Move the cursor
+          let lineNo = lineNo - 1;
+          let line = lines[lineNo];
+          if(column > line.length()) {
+            let column = line.length();
+          }
+          do Output.moveCursor(lineNo + screenRowOffset, column + LINE_PREAMBLE_LENGTH);
+          do Output.printChar(CURSOR_CHAR);
+        }
+      }
+      if(key = CHAR_DOWN) {
+        // Clear the current cursor
+        do Output.moveCursor(lineNo + screenRowOffset, column + LINE_PREAMBLE_LENGTH);
+        let line = lines[lineNo];
+        if(column < line.length()) {
+          do Output.printChar(line.charAt(column));
+        } else {
+          do Output.printChar(CHAR_SPACE);
+        }
+
+        // Move the cursor
+        let lineNo = lineNo + 1;
+        let line = lines[lineNo];
+        if(column > line.length()) {
+          let column = line.length();
+        }
+        do Output.moveCursor(lineNo + screenRowOffset, column + LINE_PREAMBLE_LENGTH);
+        do Output.printChar(CURSOR_CHAR);
+      }
       // Printable chars
       if((key > 31) & (key < 127)) {
         do Output.moveCursor(lineNo + screenRowOffset, column + LINE_PREAMBLE_LENGTH);
