@@ -16,6 +16,14 @@ class Program {
   field int ALLOWABLE_LINES;
   field int MAX_LINE_LENGTH;
 
+  field int column;
+  field int screenRowOffset;
+  field int lineNo;
+  field int numLines;
+
+  field Array lines;
+  field Array lineLengths;
+
   constructor Program new() {
     let CHAR_BACKSPACE = 129;
     let CHAR_ENTER = 128;
@@ -30,8 +38,8 @@ class Program {
     let CHAR_DOWN = 133;
 
     let LINE_PREAMBLE_LENGTH = 4;
-    let ALLOWABLE_LINES = 30;
-    let MAX_LINE_LENGTH = 40;
+    let ALLOWABLE_LINES = 23;
+    let MAX_LINE_LENGTH = 60; // 64 chars wide; 4 for the line number/gutter
 
     return this;
   }
@@ -60,21 +68,68 @@ class Program {
     return;
   }
 
-  method void main() {
-    var char key;
-    var int column;
-    var int screenRowOffset;
-    var int lineNo;
+  method void writeLine(int row, Array line, int lineLength) {
+    var int i;
 
-    var Array lines;
-    var Array lineLengths;
+    // do Output.moveCursor(row, LINE_PREAMBLE_LENGTH);
+
+    let i = 0;
+    while(i < lineLength) {
+      do Output.moveCursor(row, i + LINE_PREAMBLE_LENGTH);
+      do Output.printChar(line[i]);
+      let i = i + 1;
+    }
+    while(i < MAX_LINE_LENGTH) {
+      do Output.moveCursor(row, i + LINE_PREAMBLE_LENGTH);
+      do Output.printChar(CHAR_SPACE);
+      let i = i + 1;
+    }
+
+    return;
+  }
+
+  method void writeEmptyLine(int row) {
+    var int i;
+
+    let i = 0;
+    while(i < MAX_LINE_LENGTH) {
+      do Output.moveCursor(row, i);
+      do Output.printChar(CHAR_SPACE);
+      let i = i + 1;
+    }
+
+    return;
+  }
+
+  method void redrawFile() {
+    var int i;
+
+    let i = 0;
+    while(i < numLines) {
+      do initLine(screenRowOffset, i);
+      do writeLine(i + screenRowOffset, lines[i], lineLengths[i]);
+      let i = i + 1;
+    }
+    while(i < ALLOWABLE_LINES) {
+      do writeEmptyLine(i + screenRowOffset);
+      let i = i + 1;
+    }
+    return;
+  }
+
+  method void main() {
+    // temp variables used later on
+    var char key;
     var int i;
     var int j;
-
+    var int len;
     var Array line;
+    var int second_line;
 
+    // begin actual code
     let lines = Array.new(ALLOWABLE_LINES);
     let lineLengths = Array.new(ALLOWABLE_LINES);
+    let numLines = 1;
 
     let i = 0;
     while(i < ALLOWABLE_LINES) {
@@ -101,14 +156,42 @@ class Program {
     while(true) {
       let key = waitKey();
       if(key = CHAR_BACKSPACE) {
-        if(~(column = 0)) {
-          do Output.moveCursor(lineNo + screenRowOffset, column + LINE_PREAMBLE_LENGTH);
-          do Output.printChar(CHAR_SPACE);
+        // Following the standard convention, backspace acts as if the cursor was to the left of the current char
+        if(column > 0) {
+          // Remove the character from the string data
+          do ArrayUtils.remove(line, lineLengths[lineNo], column - 1);
+
           let column = column - 1;
+          let lineLengths[lineNo] = lineLengths[lineNo] - 1;
+
+          // Redraw the file
+          do redrawFile();
+
+          // Move the Output cursor backwards and draw the user-cursor
           do Output.moveCursor(lineNo + screenRowOffset, column + LINE_PREAMBLE_LENGTH);
           do Output.printChar(CURSOR_CHAR);
+        } else {
+          if(lineNo > 0) {
+            // Add the line's contents to the previous line
+            do ArrayUtils.append(
+              lines[lineNo - 1], lineLengths[lineNo - 1],
+              lines[lineNo], lineLengths[lineNo]);
+            let lineLengths[lineNo - 1] = lineLengths[lineNo - 1] + lineLengths[lineNo];
+            // Remove the line
+            do ArrayUtils.remove(lines, numLines, lineNo);
+            do ArrayUtils.remove(lineLengths, numLines, lineNo);
 
-          // TODO - Remove the character from the string data
+            let numLines = numLines - 1;
+            let lineNo = lineNo - 1;
+
+            // Redraw the file
+            do redrawFile();
+
+            // Place the cursor at the end of the previous line (which number is now lineNo)
+            let column = lineLengths[lineNo];
+            do Output.moveCursor(lineNo + screenRowOffset, column + LINE_PREAMBLE_LENGTH);
+            do Output.printChar(CURSOR_CHAR);
+          }
         }
       }
       if(key = CHAR_ENTER) {
@@ -121,9 +204,20 @@ class Program {
           do Output.printChar(CHAR_SPACE);
         }
 
+        // Split the current line
+        let len = lineLengths[lineNo];
+        let line = lines[lineNo];
+        let lineLengths[lineNo] = column;
+        let second_line = line + column;
+        do ArrayUtils.insert(lineLengths, numLines, lineNo + 1, len - column);
+        do ArrayUtils.insert(lines, numLines, lineNo + 1, second_line);
+
+        let numLines = numLines + 1;
+        // Redraw the file
+        do redrawFile();
+
         let lineNo = lineNo + 1;
         let column = 0;
-        do initLine(screenRowOffset, lineNo);
       } 
       if(key = CHAR_LEFT) {
         if(column > 0) {
@@ -195,16 +289,17 @@ class Program {
       // Printable chars
       if((key > 31) & (key < 127)) {
         if(lineLengths[lineNo] < MAX_LINE_LENGTH) {
-          do Output.moveCursor(lineNo + screenRowOffset, column + LINE_PREAMBLE_LENGTH);
-          do Output.printChar(key);
-          do Output.moveCursor(lineNo + screenRowOffset, column + LINE_PREAMBLE_LENGTH + 1);
-          do Output.printChar(CURSOR_CHAR);
-
           let line = lines[lineNo];
           let line[column] = key;
 
           let column = column + 1;
           let lineLengths[lineNo] = lineLengths[lineNo] + 1;
+
+          // Redraw the file
+          do redrawFile();
+
+          do Output.moveCursor(lineNo + screenRowOffset, column + LINE_PREAMBLE_LENGTH);
+          do Output.printChar(CURSOR_CHAR);
         }
       }
     }
