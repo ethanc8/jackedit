@@ -1,5 +1,7 @@
 class Main {
   function void main() {
+    // Program, a separate class, is used because
+    // I want to have global variables (fields).
     var Program program;
     let program = Program.new();
     do program.main();

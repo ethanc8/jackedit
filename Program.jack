@@ -24,6 +24,7 @@ class Program {
   field Array lines;
   field Array lineLengths;
 
+  /// Initializes the global variables.
   constructor Program new() {
     let CHAR_BACKSPACE = 129;
     let CHAR_ENTER = 128;
@@ -45,6 +46,7 @@ class Program {
   }
 
   // https://github.com/nand2tetris/nand2tetris_simulator/blob/327b7e4337b31efb815e1c1e3913c0efd299bcf2/BuiltInVMCodeSource/Keyboard.java#L53
+  /// Waits for a keypress, then returns the pressed key.
   method char waitKey() {
     var char current;
     var char saved;
@@ -52,6 +54,7 @@ class Program {
     let saved = 0;
 
     while(saved = 0 | ~(current = 0)) {
+      // Unfortunately this still is too laggy; it must be the web IDE's fault.
       do Sys.wait(1); // millisecond
       let current = Keyboard.keyPressed();
       if(~(current = 0)) {
@@ -61,13 +64,14 @@ class Program {
     return saved;
   }
 
-  /// Initializes a line with its line number
+  /// Initializes a line with its line number.
   method void initLine(int screenRowOffset, int lineNo) {
     do Output.moveCursor(lineNo + screenRowOffset, 0);
     do Output.printInt(lineNo);
     return;
   }
 
+  /// Writes a line's contents (not line number) to the screen.
   method void writeLine(int row, Array line, int lineLength) {
     var int i;
 
@@ -88,6 +92,7 @@ class Program {
     return;
   }
 
+  /// Writes an empty line to the screen, overwriting the line number.
   method void writeEmptyLine(int row) {
     var int i;
 
@@ -101,6 +106,8 @@ class Program {
     return;
   }
 
+  /// Redraw the entire file.
+  /// Unlike the previous methods, this method uses the global variables.
   method void redrawFile() {
     var int i;
 
@@ -117,6 +124,7 @@ class Program {
     return;
   }
 
+  /// The main loop of the editor program.
   method void main() {
     // temp variables used later on
     var char key;
@@ -127,6 +135,7 @@ class Program {
     var int second_line;
 
     // begin actual code
+    // Initialize the arrays and other variables.
     let lines = Array.new(ALLOWABLE_LINES);
     let lineLengths = Array.new(ALLOWABLE_LINES);
     let numLines = 1;
@@ -136,13 +145,6 @@ class Program {
       let lines[i] = Array.new(MAX_LINE_LENGTH);
       let lineLengths[i] = 0;
 
-      // // Initialize the line to be all-spaces
-      // let line = lines[i];
-      // let j = 0;
-      // while(j < MAX_LINE_LENGTH) {
-      //   let line[j] = CHAR_SPACE;
-      // }
-
       let i = i + 1;
     }
     
@@ -151,8 +153,10 @@ class Program {
     let screenRowOffset = 0;
     let lineNo = 0;
 
+    // Write the line number for line 0
     do initLine(screenRowOffset, lineNo);
 
+    // Main loop
     while(true) {
       let key = waitKey();
       if(key = CHAR_BACKSPACE) {
