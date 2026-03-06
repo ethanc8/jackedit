@@ -14,6 +14,7 @@ class Program {
   field int LINE_PREAMBLE_LENGTH;
 
   field int ALLOWABLE_LINES;
+  field int MAX_LINE_LENGTH;
 
   constructor Program new() {
     let CHAR_BACKSPACE = 129;
@@ -29,8 +30,8 @@ class Program {
     let CHAR_DOWN = 133;
 
     let LINE_PREAMBLE_LENGTH = 4;
-    let ALLOWABLE_LINES = 15;
-    let MAX_LINE_LENGTH = 20;
+    let ALLOWABLE_LINES = 30;
+    let MAX_LINE_LENGTH = 40;
 
     return this;
   }
@@ -43,7 +44,7 @@ class Program {
     let saved = 0;
 
     while(saved = 0 | ~(current = 0)) {
-      do Sys.wait(25);
+      do Sys.wait(1); // millisecond
       let current = Keyboard.keyPressed();
       if(~(current = 0)) {
         let saved = current;
@@ -68,11 +69,13 @@ class Program {
     var Array lines;
     var int i;
 
+    var String line;
+
     let lines = Array.new(ALLOWABLE_LINES);
 
     let i = 0;
     while(i < ALLOWABLE_LINES) {
-      lines[i] = String.new(MAX_LINE_LENGTH);
+      let lines[i] = String.new(MAX_LINE_LENGTH);
 
       let i = i + 1;
     }
@@ -94,30 +97,61 @@ class Program {
           let column = column - 1;
           do Output.moveCursor(lineNo + screenRowOffset, column + LINE_PREAMBLE_LENGTH);
           do Output.printChar(CURSOR_CHAR);
+
+          // TODO - Remove the character from the string data
         }
       }
       if(key = CHAR_ENTER) {
+        // Clear the current cursor
+        do Output.moveCursor(lineNo + screenRowOffset, column + LINE_PREAMBLE_LENGTH);
+        let line = lines[lineNo];
+        if(column < line.length()) {
+          do Output.printChar(line.charAt(column));
+        } else {
+          do Output.printChar(CHAR_SPACE);
+        }
+
         let lineNo = lineNo + 1;
         let column = 0;
         do initLine(screenRowOffset, lineNo);
       } 
       if(key = CHAR_LEFT) {
-        let column = column - 1;
-        do Output.moveCursor(lineNo + screenRowOffset, column + LINE_PREAMBLE_LENGTH);
-        do Output.printChar(CURSOR_CHAR);
+        if(column > 0) {
+          // Clear the current cursor
+          do Output.moveCursor(lineNo + screenRowOffset, column + LINE_PREAMBLE_LENGTH);
+          let line = lines[lineNo];
+          if(column < line.length()) {
+            do Output.printChar(line.charAt(column));
+          } else {
+            do Output.printChar(CHAR_SPACE);
+          }
+
+          // Move the cursor
+          let column = column - 1;
+          do Output.moveCursor(lineNo + screenRowOffset, column + LINE_PREAMBLE_LENGTH);
+          do Output.printChar(CURSOR_CHAR);
+        }
       }
       if(key = CHAR_RIGHT) {
-        let column = column + 1;
         do Output.moveCursor(lineNo + screenRowOffset, column + LINE_PREAMBLE_LENGTH);
-        do Output.printChar(CURSOR_CHAR);
+        let line = lines[lineNo];
+        if(column < line.length()) {
+          do Output.printChar(line.charAt(column));
+          let column = column + 1;
+          do Output.moveCursor(lineNo + screenRowOffset, column + LINE_PREAMBLE_LENGTH);
+          do Output.printChar(CURSOR_CHAR);
+        }
       }
+      // Printable chars
       if((key > 31) & (key < 127)) {
         do Output.moveCursor(lineNo + screenRowOffset, column + LINE_PREAMBLE_LENGTH);
         do Output.printChar(key);
+        do Output.moveCursor(lineNo + screenRowOffset, column + LINE_PREAMBLE_LENGTH + 1);
         do Output.printChar(CURSOR_CHAR);
-        let column = column + 1;
 
-        do lines[lineNo].setCharAt(column, key);
+        do StringUtils.setChar(lines[lineNo], column, key);
+
+        let column = column + 1;
       }
     }
     return;

@@ -1,0 +1,28 @@
+class StringUtils {
+  function void setChar(String string, int i, char c) {
+    var int len;
+    var int j;
+
+    let len = string.length();
+
+    if(len > i) {
+      do string.setCharAt(i, c);
+    }
+
+    if(len = i) {
+      do string.appendChar(c);
+    }
+
+    if(len < i) {
+      let j = len;
+      while(j < i) {
+        do string.appendChar(32); // 32 is space
+
+        let j = j + 1;
+      }
+      do string.appendChar(c);
+    }
+
+    return;
+  }
+}
