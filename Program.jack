@@ -67,20 +67,30 @@ class Program {
     var int lineNo;
 
     var Array lines;
+    var Array lineLengths;
     var int i;
+    var int j;
 
-    var String line;
+    var Array line;
 
     let lines = Array.new(ALLOWABLE_LINES);
+    let lineLengths = Array.new(ALLOWABLE_LINES);
 
     let i = 0;
     while(i < ALLOWABLE_LINES) {
-      let lines[i] = String.new(MAX_LINE_LENGTH);
+      let lines[i] = Array.new(MAX_LINE_LENGTH);
+      let lineLengths[i] = 0;
+
+      // // Initialize the line to be all-spaces
+      // let line = lines[i];
+      // let j = 0;
+      // while(j < MAX_LINE_LENGTH) {
+      //   let line[j] = CHAR_SPACE;
+      // }
 
       let i = i + 1;
     }
     
-
     // Column, lineNo + screenRowOffset always represent the position of the user cursor "|"
     let column = 0;
     let screenRowOffset = 0;
@@ -105,8 +115,8 @@ class Program {
         // Clear the current cursor
         do Output.moveCursor(lineNo + screenRowOffset, column + LINE_PREAMBLE_LENGTH);
         let line = lines[lineNo];
-        if(column < line.length()) {
-          do Output.printChar(line.charAt(column));
+        if(column < lineLengths[lineNo]) {
+          do Output.printChar(line[column]);
         } else {
           do Output.printChar(CHAR_SPACE);
         }
@@ -120,8 +130,8 @@ class Program {
           // Clear the current cursor
           do Output.moveCursor(lineNo + screenRowOffset, column + LINE_PREAMBLE_LENGTH);
           let line = lines[lineNo];
-          if(column < line.length()) {
-            do Output.printChar(line.charAt(column));
+          if(column < lineLengths[lineNo]) {
+            do Output.printChar(line[column]);
           } else {
             do Output.printChar(CHAR_SPACE);
           }
@@ -135,8 +145,8 @@ class Program {
       if(key = CHAR_RIGHT) {
         do Output.moveCursor(lineNo + screenRowOffset, column + LINE_PREAMBLE_LENGTH);
         let line = lines[lineNo];
-        if(column < line.length()) {
-          do Output.printChar(line.charAt(column));
+        if(column < lineLengths[lineNo]) {
+          do Output.printChar(line[column]);
           let column = column + 1;
           do Output.moveCursor(lineNo + screenRowOffset, column + LINE_PREAMBLE_LENGTH);
           do Output.printChar(CURSOR_CHAR);
@@ -147,8 +157,8 @@ class Program {
           // Clear the current cursor
           do Output.moveCursor(lineNo + screenRowOffset, column + LINE_PREAMBLE_LENGTH);
           let line = lines[lineNo];
-          if(column < line.length()) {
-            do Output.printChar(line.charAt(column));
+          if(column < lineLengths[lineNo]) {
+            do Output.printChar(line[column]);
           } else {
             do Output.printChar(CHAR_SPACE);
           }
@@ -156,8 +166,8 @@ class Program {
           // Move the cursor
           let lineNo = lineNo - 1;
           let line = lines[lineNo];
-          if(column > line.length()) {
-            let column = line.length();
+          if(column > lineLengths[lineNo]) {
+            let column = lineLengths[lineNo];
           }
           do Output.moveCursor(lineNo + screenRowOffset, column + LINE_PREAMBLE_LENGTH);
           do Output.printChar(CURSOR_CHAR);
@@ -167,8 +177,8 @@ class Program {
         // Clear the current cursor
         do Output.moveCursor(lineNo + screenRowOffset, column + LINE_PREAMBLE_LENGTH);
         let line = lines[lineNo];
-        if(column < line.length()) {
-          do Output.printChar(line.charAt(column));
+        if(column < lineLengths[lineNo]) {
+          do Output.printChar(line[column]);
         } else {
           do Output.printChar(CHAR_SPACE);
         }
@@ -176,22 +186,26 @@ class Program {
         // Move the cursor
         let lineNo = lineNo + 1;
         let line = lines[lineNo];
-        if(column > line.length()) {
-          let column = line.length();
+        if(column > lineLengths[lineNo]) {
+          let column = lineLengths[lineNo];
         }
         do Output.moveCursor(lineNo + screenRowOffset, column + LINE_PREAMBLE_LENGTH);
         do Output.printChar(CURSOR_CHAR);
       }
       // Printable chars
       if((key > 31) & (key < 127)) {
-        do Output.moveCursor(lineNo + screenRowOffset, column + LINE_PREAMBLE_LENGTH);
-        do Output.printChar(key);
-        do Output.moveCursor(lineNo + screenRowOffset, column + LINE_PREAMBLE_LENGTH + 1);
-        do Output.printChar(CURSOR_CHAR);
+        if(lineLengths[lineNo] < MAX_LINE_LENGTH) {
+          do Output.moveCursor(lineNo + screenRowOffset, column + LINE_PREAMBLE_LENGTH);
+          do Output.printChar(key);
+          do Output.moveCursor(lineNo + screenRowOffset, column + LINE_PREAMBLE_LENGTH + 1);
+          do Output.printChar(CURSOR_CHAR);
 
-        do StringUtils.setChar(lines[lineNo], column, key);
+          let line = lines[lineNo];
+          let line[column] = key;
 
-        let column = column + 1;
+          let column = column + 1;
+          let lineLengths[lineNo] = lineLengths[lineNo] + 1;
+        }
       }
     }
     return;
